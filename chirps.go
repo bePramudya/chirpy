@@ -11,12 +11,33 @@ import (
 	"github.com/google/uuid"
 )
 
-type Chirps struct {
+type Chirp struct {
 	Id        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Body      string    `json:"body"`
 	UserId    uuid.UUID `json:"user_id"`
+}
+
+func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
+	var returnValues []Chirp
+	chirps, err := cfg.db.GetChirps(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't get chirps data", err)
+		return
+	}
+
+	for _, chirp := range chirps {
+		returnValues = append(returnValues, Chirp{
+			Id:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserId:    chirp.UserID,
+		})
+	}
+
+	respondWithJSON(w, http.StatusOK, returnValues)
 }
 
 func (cfg *apiConfig) handlerCreateChirps(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +46,7 @@ func (cfg *apiConfig) handlerCreateChirps(w http.ResponseWriter, r *http.Request
 		UserId uuid.UUID `json:"user_id"`
 	}
 	type returnValues struct {
-		Chirps
+		Chirp
 	}
 
 	params := parameters{}
@@ -52,7 +73,7 @@ func (cfg *apiConfig) handlerCreateChirps(w http.ResponseWriter, r *http.Request
 	}
 
 	respondWithJSON(w, http.StatusCreated, returnValues{
-		Chirps: Chirps{
+		Chirp: Chirp{
 			Id:        chirp.ID,
 			CreatedAt: chirp.CreatedAt,
 			UpdatedAt: chirp.UpdatedAt,
