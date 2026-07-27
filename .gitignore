@@ -1,3 +1,7 @@
 Makefile
-out
+.env
+
 scratch.go
+
+out
+chirpy
