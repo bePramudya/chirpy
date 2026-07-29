@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/bePramudya/chirpy/internal/auth"
+	"github.com/bePramudya/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email            string `json:"email"`
-		Password         string `json:"password"`
-		ExpiresInSeconds int    `json:"expires_in_seconds"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	type returnVals struct {
 		User
@@ -20,9 +20,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		RefreshToken string `json:"refresh_token"`
 	}
 
-	params := parameters{
-		ExpiresInSeconds: 60 * 60,
-	}
+	params := parameters{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&params)
 	if err != nil {
@@ -37,19 +35,27 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	match, err := auth.CheckPasswordHash(params.Password, user.HashedPassword)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't compare passwrord hash", err)
-		return
-	}
-	if match == false {
+	if err != nil || !match {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password", err)
 		return
 	}
 
-	expirationTime := time.Duration(params.ExpiresInSeconds) * time.Second
-	accessToken, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expirationTime)
+	accessToken, err := auth.MakeJWT(user.ID, cfg.jwtSecret, auth.AccessTokenExpAt)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't make JWT token", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create access JWT", err)
+		return
+	}
+
+	refreshToken := auth.MakeRefreshToken()
+	rtExpAt := time.Now().UTC().Add(auth.RefreshTokenLifetime)
+
+	refreshTokenDB, err := cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		UserID:    user.ID,
+		ExpiresAt: rtExpAt,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't save  refresh token", err)
 		return
 	}
 
@@ -60,7 +66,8 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt: user.UpdatedAt,
 			Email:     user.Email,
 		},
-		Token: accessToken,
+		Token:        accessToken,
+		RefreshToken: refreshTokenDB.Token,
 	})
 
 }

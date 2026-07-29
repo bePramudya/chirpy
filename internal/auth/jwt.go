@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,7 +17,9 @@ type TokenType string
 
 const (
 	// TokenTypeAccess -
-	TokenTypeAccess TokenType = "chirpy-access"
+	TokenTypeAccess      TokenType     = "chirpy-access"
+	AccessTokenExpAt     time.Duration = 1 * time.Hour
+	RefreshTokenLifetime time.Duration = 60 * 24 * time.Hour
 )
 
 // ErrNoAuthHeaderIncluded -
@@ -80,4 +84,12 @@ func GetBearerToken(headers http.Header) (string, error) {
 	TOKEN_STRING := splitAuth[1]
 
 	return TOKEN_STRING, nil
+}
+
+func MakeRefreshToken() string {
+	key := make([]byte, 32)
+	rand.Read(key)
+
+	return hex.EncodeToString(key)
+
 }
