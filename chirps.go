@@ -75,7 +75,7 @@ func (cfg *apiConfig) handlerCreateChirps(w http.ResponseWriter, r *http.Request
 
 	accessToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "No Bearer token", err)
+		respondWithError(w, http.StatusBadRequest, "Couldn't found access token", err)
 		return
 	}
 

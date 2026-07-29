@@ -16,7 +16,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 
 	refreshToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Couldn't find token", err)
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find access token", err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) handlerRevokeToken(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Couldn't find token", err)
+		respondWithError(w, http.StatusBadRequest, "Couldn't find access token", err)
 		return
 	}
 
