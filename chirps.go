@@ -73,13 +73,13 @@ func (cfg *apiConfig) handlerCreateChirps(w http.ResponseWriter, r *http.Request
 		Chirp
 	}
 
-	tokenString, err := auth.GetBearerToken(r.Header)
+	accessToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "No Bearer token", err)
 		return
 	}
 
-	userID, err := auth.ValidateJWT(tokenString, cfg.jwtSecret)
+	userID, err := auth.ValidateJWT(accessToken, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect user credentials", err)
 		return

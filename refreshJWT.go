@@ -25,11 +25,6 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "Invalid refresh token", err)
 		return
 	}
-	// if refreshTokenDetails.ExpiresAt.Before(time.Now().UTC()) ||
-	// 	refreshTokenDetails.RevokedAt.Valid {
-	// 	respondWithError(w, http.StatusUnauthorized, "Token expired or revoked", err)
-	// 	return
-	// }
 
 	accessToken, err := auth.MakeJWT(user.ID, cfg.jwtSecret, auth.AccessTokenExpAt)
 	if err != nil {
